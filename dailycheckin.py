@@ -81,12 +81,15 @@ if uploaded_file:
         st.warning("⚠️ 当前数据中没有剩余天数用于预测，请确保数据覆盖整个月。")
     else:
         required_score_per_day = (desired_avg * (len(df) + days_left) - df['时间差分钟'].sum()) / days_left
-        st.markdown(f"""
-<style>
-.stApp { font-family: sans-serif; }
-.stMarkdown { line-height: 1.6; }
-</style>
-""", unsafe_allow_html=True)
+        st.markdown(
+            """
+            <style>
+            .stApp { font-family: sans-serif; }
+            .stMarkdown { line-height: 1.6; }
+            </style>
+            """,
+            unsafe_allow_html=True
+        )
         st.markdown(f"""
 ### 计算明细
 - 当前已记录天数: {len(df)}
