@@ -2,7 +2,7 @@ import streamlit as st
 import pandas as pd
 import matplotlib.pyplot as plt
 plt.rcParams["font.family"] = ["sans-serif"]
-plt.rcParams["font.sans-serif"] = ["Noto Sans CJK SC", "WenQuanYi Micro Hei", "Heiti TC", "SimHei", "sans-serif"]
+plt.rcParams["font.sans-serif"] = ["WenQuanYi Micro Hei", "WenQuanYi Zen Hei", "Noto Sans CJK SC", "sans-serif"]
 plt.rcParams["axes.unicode_minus"] = False  # 解决负号显示问题
 from datetime import datetime, time
 
