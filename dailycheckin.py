@@ -82,6 +82,12 @@ if uploaded_file:
     else:
         required_score_per_day = (desired_avg * (len(df) + days_left) - df['时间差分钟'].sum()) / days_left
         st.markdown(f"""
+<style>
+.stApp { font-family: sans-serif; }
+.stMarkdown { line-height: 1.6; }
+</style>
+""", unsafe_allow_html=True)
+        st.markdown(f"""
 ### 计算明细
 - 当前已记录天数: {len(df)}
 - 当前总时间差: {df['时间差分钟'].sum():.2f} 分钟
