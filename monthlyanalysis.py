@@ -100,7 +100,7 @@ if not df.empty:
     st.dataframe(filtered_group, use_container_width=True)
     # 添加Excel导出功能
     st.subheader("💾 导出月度数据")
-    export_month = st.selectbox("选择导出月份", df["月份"].unique())
+    export_month = st.selectbox("选择导出月份", sorted(df["月份"].unique()))
     export_data = df[df["月份"] == export_month].copy()
 
     # 调整列顺序和名称以匹配Excel格式
