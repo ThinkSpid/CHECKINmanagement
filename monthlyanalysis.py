@@ -1,5 +1,8 @@
 import streamlit as st
 import pandas as pd
+from io import BytesIO
+import openpyxl
+from openpyxl import Workbook
 import requests
 from datetime import datetime
 
@@ -49,8 +52,11 @@ def get_airtable_data():
         
         records.append({
             "月份": month,
-            "病例类型": fields.get("业务类型", "未知类型"),  # 根据Airtable实际字段名"业务类型"获取病例类型
-            "分值": fields.get("分值", 0)  # 假设Airtable中有"分值"字段（数值类型）
+            "患者姓名": fields.get("患者姓名", ""),  # 使用Airtable实际字段名"name"获取患者姓名
+            "科室": fields.get("科室", ""),          # 添加科室字段
+            "病例类型": fields.get("业务类型", "未知类型"),
+            "分值": fields.get("分值", 0),
+            "备注": fields.get("备注", "")           # 添加备注字段
         })
     
     return pd.DataFrame(records)
@@ -92,5 +98,76 @@ if not df.empty:
     
     st.subheader("📋 详细数据表格")
     st.dataframe(filtered_group, use_container_width=True)
+    # 添加Excel导出功能
+    st.subheader("💾 导出月度数据")
+    export_month = st.selectbox("选择导出月份", df["月份"].unique())
+    export_data = df[df["月份"] == export_month].copy()
+
+    # 调整列顺序和名称以匹配Excel格式
+    if not export_data.empty:
+        # 保留所有列并仅重命名需要的字段
+        # 移除分值重命名，避免列名冲突
+        export_data = export_data.rename(columns={
+            "病例类型": "业务类型"
+        })
+
+        # 生成Excel文件
+        output = BytesIO()
+        wb = Workbook()
+        ws = wb.active
+        ws.title = "病例统计"
+        
+        # 定义必要的列名列表
+        required_columns = ["患者姓名", "科室", "病例类型", "分值", "备注"]
+        
+        column_mapping = {
+            "患者姓名": "患者姓名",  # Airtable字段"name"映射为Excel列"患者姓名"
+            "科室": "科室",        # 科室字段映射
+            "业务类型": "病例类型",  # Airtable字段"业务类型"映射为Excel列"病例类型"
+            "分值": "分值",
+            "备注": "备注"         # 备注字段ID
+        }
+        export_data = export_data.rename(columns=column_mapping)
+        
+        # 确保所有必要列存在
+        for col in required_columns:
+            if col not in export_data.columns:
+                export_data[col] = ""
+        
+        # 按要求顺序排列列
+        export_data = export_data[required_columns]
+        
+        # 添加序号列作为第一列
+        export_data.insert(0, "序号", range(1, len(export_data) + 1))
+        
+        # 写入表头
+        for col_num, column_title in enumerate(export_data.columns, 1):
+            ws.cell(row=1, column=col_num, value=column_title)
+        
+        # 写入数据行
+        for row_num, row_data in enumerate(export_data.itertuples(index=False), 2):
+            for col_num, value in enumerate(row_data, 1):
+                ws.cell(row=row_num, column=col_num, value=value)
+        
+        # 添加总分行
+        total_row = len(export_data) + 2  # 最终确认：数据从第2行开始，总计行在数据行后显示（无空白行）
+        ws.cell(row=total_row, column=4, value="总计")  # 将总计标签移至业务类型列
+        ws.cell(row=total_row, column=5, value=export_data["分值"].sum())  # 修正总分列位置
+        
+        wb.save(output)
+        output.seek(0)
+
+        # 下载按钮
+        # 格式化月份为不带前导零的格式
+        year, month = export_month.split('-')
+        formatted_month = f"{int(month)}月份"
+        file_name = f"任彬彬{year}年{formatted_month}病例统计.xlsx"
+        st.download_button(
+            label=f"下载{year}年{formatted_month}数据",
+            data=output,
+            file_name=file_name,
+            mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
+        )
+ 
 else:
     st.info("请检查Airtable配置或确保表中存在数据")
